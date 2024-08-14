@@ -1,0 +1,30 @@
+.sidebar {
+    width: 16rem;
+    height: calc(100vh - 52px);
+    border-right: 1px solid #c4ccde;
+    background-color: #f3f5fa;
+    
+}
+
+.sidebar ul {
+    list-style: none;
+    border: 1px solid black;
+    border-radius: 5px;
+    margin: 15px;
+}
+
+.link-group {
+    padding: 15px;
+    width: 100%;
+}
+
+.link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid;
+    border-radius: 5px;
+    color: #fff;
+    background-color: #77b735;
+    text-decoration: none;
+}
