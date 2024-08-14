@@ -7,7 +7,7 @@ const Sidebar = () => {
       <div className="link-group">
         <NavLink className="link" to={"#"}>
           <i className="bi bi-house-fill me-2 fs-4"></i>
-          <span>Home</span>
+          <span>Noticias</span>
         </NavLink>
       </div>
     </div>

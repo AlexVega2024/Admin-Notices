@@ -3,3 +3,8 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+.container-sidebar {
+  border-right: 2px solid #c4ccde;
+  background-color: #f3f5fa;
+}

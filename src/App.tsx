@@ -6,15 +6,17 @@ import { Dashboard } from "./pages/Dashboard";
 
 function App() {
   return (
-    <div>
-      <Header />
-      <div className="d-flex">
+    <div className="row">
+      <div className="col-12">
+        <Header />
+      </div>
+      <div className="col-2 container-sidebar m-auto">
         <Sidebar />
-        <div className="content">
-          <Routes>
-            <Route path="/" element={<Dashboard></Dashboard>} />
-          </Routes>
-        </div>
+      </div>
+      <div className="col-10">
+        <Routes>
+          <Route path="/" element={<Dashboard></Dashboard>} />
+        </Routes>
       </div>
     </div>
   );
