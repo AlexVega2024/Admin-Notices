@@ -1,13 +1,13 @@
 import { IconButton } from "@mui/material";
-import SwitchComponent from "../components/common/SwitchComponent";
-import "../styles/Table.css";
+import SwitchComponent from "../../components/common/SwitchComponent";
+import "../../styles/Noticias.css";
 import { Delete, Edit } from "@mui/icons-material";
 
-export const Dashboard = () => {
+export const NoticiasPage = () => {
 
   return (
-    <div className="dashboard">
-      <h2 className="p-2">Listado de Categoría</h2>
+    <div>
+      <h2 className="p-2">Listado de Noticias</h2>
       <div className="container-table">
         <table className="table">
           <thead>

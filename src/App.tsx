@@ -1,24 +1,34 @@
-import { Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import Header from "./components/layout/Header";
-import Sidebar from "./components/layout/Sidebar";
-import { Dashboard } from "./pages/Dashboard";
+import { UserProvider } from "./context/UseProvider";
+import { PrivateRoute } from "./routes/PrivateRoutes";
+import { routes } from "./routes";
+import NotFoundPage from "./pages/notfound/NotFoundPage";
+import LoginPage from "./pages/login/LoginPage";
+import RegisterPage from "./pages/login/RegisterPage";
 
 function App() {
   return (
-    <div className="row">
-      <div className="col-12">
-        <Header />
-      </div>
-      <div className="col-2 container-sidebar m-auto">
-        <Sidebar />
-      </div>
-      <div className="col-10">
+    <BrowserRouter>
+      {/* <UserProvider> */}
         <Routes>
-          <Route path="/" element={<Dashboard></Dashboard>} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/"
+            element={
+              // <PrivateRoute>
+                <Header />
+              // </PrivateRoute>
+            }
+          >
+            {routes}
+          </Route>
+          <Route path="/*" element={<NotFoundPage />} />
         </Routes>
-      </div>
-    </div>
+      {/* </UserProvider> */}
+    </BrowserRouter>
   );
 }
 
