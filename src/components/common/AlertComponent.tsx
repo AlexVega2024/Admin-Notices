@@ -2,7 +2,7 @@ import { Alert, AlertTitle, Stack } from "@mui/material";
 import React from "react";
 
 type AlertProps = {
-  severity?: "success" | "error";
+  severity?: "success" | "error" | "info";
   title?: string;
   description?: string;
 };

@@ -1,4 +1,5 @@
 export interface INotice {
+  id_category?: number;
   id_notice: number;
   img_card: string;
   img_banner?: string;

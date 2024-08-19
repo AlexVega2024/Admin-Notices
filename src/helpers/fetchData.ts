@@ -5,26 +5,25 @@ type MethodProps = "GET" | "POST" | "PUT" | "DELETE";
 export const fetchApiNodeNoticies = async (
   method: MethodProps,
   endPoint: string,
-  params?: Record<number, string> 
+  params?: FormData | Record<number, any>
 ) => {
   try {
     let url = `${API_NODE}${endPoint}`;
     let requestOptions: RequestInit = {
       method: method,
-      headers: {
-        "Content-Type": "application/json",
-      },
       mode: "cors",
       cache: "no-cache",
     };
 
-    if (method === "GET" && params) {
-      const queryParams = new URLSearchParams(params);
-      url += `?${queryParams.toString()}`;
-    } else if ((method === "POST" || method === "PUT") && params) {
-      requestOptions.body = JSON.stringify(params);
+    if ((method === "POST" || method === "PUT") && params) {
+      if (params instanceof FormData) {
+        requestOptions.body = params;
+      } else {
+        requestOptions.headers = { "Content-Type": "application/json" };
+        requestOptions.body = JSON.stringify(params);
+      }
     }
-
+    
     const response = await fetch(url, requestOptions);
 
     // Verificar si la solicitud fue exitosa

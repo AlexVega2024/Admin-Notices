@@ -18,7 +18,7 @@ interface EditNoticeModalProps {
   onSuccess: () => void;
 }
 
-const DialogEditCategories = ({
+const DialogEditNoticies= ({
   open,
   onClose,
   notice,
@@ -40,32 +40,6 @@ const DialogEditCategories = ({
       });
     }
   };
-
-  // const seleccionarImagen1 = (e) => {
-  //   var files = e.target.files;
-  //   var file = files[0];
-  //   var extension = file.name.split(".").pop();
-  //   extension = extension.toLowerCase();
-  //   if (
-  //     extension === "jpg" ||
-  //     extension === "jpeg" ||
-  //     extension === "png" ||
-  //     extension === "gif" ||
-  //     extension === "webp" ||
-  //     extension === "svg"
-  //   ) {
-  //     setState({ imagen: true, archivoExtension: true });
-  //     state.portada_url = this.uuidv4() + "." + extension;
-  //     readURL1(e);
-  //     if (files && file) {
-  //       var reader = new FileReader();
-  //       reader.onload = this._handleReaderLoaded1.bind(this);
-  //       reader.readAsBinaryString(file);
-  //     }
-  //   } else {
-  //     setState({ archivoExtension: false });
-  //   }
-  // };
 
   const handleSubmit = async () => {
     if (editedNotice) {
@@ -129,18 +103,6 @@ const DialogEditCategories = ({
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Fecha y Hora"
-                name="date_time"
-                fullWidth
-                variant="outlined"
-                type="datetime-local"
-                InputLabelProps={{ shrink: true }}
-                value={editedNotice?.date_time || ""}
-                onChange={handleChange}
-              />
-            </Grid>
           </Grid>
         </Box>
       </DialogContent>
@@ -156,4 +118,4 @@ const DialogEditCategories = ({
   );
 };
 
-export default DialogEditCategories;
+export default DialogEditNoticies;

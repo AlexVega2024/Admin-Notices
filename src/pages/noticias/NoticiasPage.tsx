@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { fetchApiNodeNoticies } from "../../helpers/fetchData";
 import { INotice } from "../../interfaces/Notice.interface";
 import DialogRegisterNoticies from "../../components/common/DialogRegisterNoticies";
-import DialogEditCategories from "../../components/common/DialogEditCategories";
+import DialogEditCategories from "../../components/common/DialogEditNoticies";
+import { formatDateTime } from "../../helpers/formatDate";
 
 export const NoticiasPage = () => {
   const [listDataNotices, setListDataNotices] = useState<INotice[]>([]);
@@ -13,7 +14,6 @@ export const NoticiasPage = () => {
   const [selectedNotice, setSelectedNotice] = useState<INotice | null>(null);
 
   useEffect(() => {
-    console.log("Se llamo el effect principal");
     const handleDataNoticies = async () => {
       try {
         const noticies = await fetchApiNodeNoticies("GET", "get-noticies");
@@ -65,6 +65,19 @@ export const NoticiasPage = () => {
       .catch((error) => console.error("Error fetching notices:", error));
   };
 
+  const handleDeleteNotice = async (id_notice: number) => {
+    if (window.confirm("¿Estás seguro de que deseas eliminar esta noticia?")) {
+      try {
+        const params = {id_notice: id_notice};
+        await fetchApiNodeNoticies("POST", 'delete-noticie', params);
+        alert("Se eliminó correctamente la noticia.");
+        location.reload();
+      } catch (error) {
+        console.error("Error eliminando la noticia:", error);
+      }
+    }
+  };
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center">
@@ -81,7 +94,9 @@ export const NoticiasPage = () => {
           </Button>
         </Box>
       </div>
-      <div className="d-flex justify-content-center align-items-center px-5">
+
+      {/* Contenedor responsivo para la tabla */}
+      <div className="table-responsive">
         <table className="table table-striped">
           <thead
             className="text-center text-white"
@@ -98,22 +113,22 @@ export const NoticiasPage = () => {
               <th scope="col">Acciones</th>
             </tr>
           </thead>
-          <tbody className="table-group-divider">
+          <tbody className="table-group-divider text-center">
             {listDataNotices.map((item: INotice) => (
               <tr key={item.id_notice}>
-                <th>{item.id_notice}</th>
+                <td>{item.id_notice}</td>
                 <td>{item.img_banner}</td>
                 <td>{item.img_card}</td>
                 <td>{item.title}</td>
                 <td>{item.description}</td>
-                <td>{item.date_time}</td>
+                <td>{formatDateTime(item.date_time!)}</td>
                 <td>
                   <Switch
                     checked={item.state_notice === 1}
                     onChange={(e) =>
                       handleSwitchChange(
                         item.id_notice,
-                        item.id_category,
+                        item.id_category!,
                         e.target.checked
                       )
                     }
@@ -127,7 +142,9 @@ export const NoticiasPage = () => {
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Eliminar">
-                      <IconButton>
+                      <IconButton
+                        onClick={() => handleDeleteNotice(item.id_notice)}
+                      >
                         <Delete color="error" />
                       </IconButton>
                     </Tooltip>
@@ -138,6 +155,7 @@ export const NoticiasPage = () => {
           </tbody>
         </table>
       </div>
+
       {/* Dialog de registro*/}
       <DialogRegisterNoticies
         open={openModal}
