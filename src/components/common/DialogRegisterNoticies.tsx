@@ -12,12 +12,11 @@ import {
   MenuItem,
   FormControl,
   Select,
-  SelectChangeEvent
+  SelectChangeEvent,
+  FormHelperText
 } from "@mui/material";
 import { ICategory, INotice } from "../../interfaces/Notice.interface";
 import { fetchApiNodeNoticies } from "../../helpers/fetchData";
-import { formatDateTime } from "../../helpers/formatDate";
-import AlertComponent from "./AlertComponent";
 
 interface RegisterNoticeModalProps {
   open: boolean;
@@ -38,9 +37,10 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
     img_banner: '',
     title: '',
     description: '',
-    date_time: '',
     state_notice: 1,
   });
+  
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const handleCategories = async () => {
@@ -54,6 +54,17 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
     };
     handleCategories();
   }, []);
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!newNotice.title) newErrors.title = "El título es obligatorio.";
+    if (!newNotice.description) newErrors.description = "La descripción es obligatoria.";
+    if (!newNotice.date_time) newErrors.date_time = "La fecha y hora son obligatorias.";
+    if (!newNotice.id_category) newErrors.id_category = "Debe seleccionar una categoría.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setNewNotice({
@@ -71,9 +82,10 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
 
   const handleImageSelect = (
     e: React.ChangeEvent<HTMLInputElement>,
-    imageType: "img_card" | "img_banner"
+    imageType: "img_card" | "img_banner" 
   ) => {
     const files = e.target.files;
+    console.log("file: ", files);
     if (files && files.length > 0) {
       const file = files[0];
       const extension = file.name.split(".").pop()?.toLowerCase();
@@ -90,15 +102,39 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
     }
   };
 
+  const handleMultipleImageSelect = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = e.target.files;
+    console.log("file: ", files);
+    // if (files && files.length > 0) {
+    //   const file = files[0];
+    //   const extension = file.name.split(".").pop()?.toLowerCase();
+    //   if (
+    //     ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension || "")
+    //   ) {
+    //     setNewNotice((prevNotice) => ({
+    //       ...prevNotice,
+    //       ["name_image"]: file,
+    //     }));
+    //   } else {
+    //     console.error("Formato de imagen no soportado");
+    //   }
+    // }
+  };
+
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append('id_category', newNotice.id_category!.toString());
-      formData.append('img_banner', newNotice.img_banner!);
-      formData.append('img_card', newNotice.img_card!);
+      formData.append('img_banner', newNotice.img_banner as any);
+      formData.append('img_card', newNotice.img_card as any);
       formData.append('title', newNotice.title);
       formData.append('description', newNotice.description);
-      formData.append('date_time', newNotice.date_time!);
       formData.append('state_notice', newNotice.state_notice!.toString());
   
       await fetchApiNodeNoticies("POST", "register-notice", formData);
@@ -116,29 +152,39 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
         <Box sx={{ width: 500 }}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <FormControl fullWidth variant="filled">
+              <FormControl
+                fullWidth
+                variant="filled"
+                error={!!errors.id_category}
+              >
                 <InputLabel id="category-label">Elija una categoría</InputLabel>
                 <Select
                   labelId="category-label"
                   id="category-select"
                   name="id_category"
-                  value={newNotice.id_category || ''}
+                  value={newNotice.id_category || ""}
                   onChange={handleCategoryChange}
                   label="Categoría"
                 >
                   {listCategories.map((category) => (
-                    <MenuItem key={category.id_category} value={category.id_category}>
+                    <MenuItem
+                      key={category.id_category}
+                      value={category.id_category}
+                    >
                       {category.name}
                     </MenuItem>
                   ))}
                 </Select>
+                {errors.id_category && (
+                  <FormHelperText>{errors.id_category}</FormHelperText>
+                )}
               </FormControl>
             </Grid>
             <Grid item xs={12}>
               <label htmlFor="img_card_input">Imagen del Card</label>
               <input
                 id="img_card_input"
-                className="form-control" 
+                className="form-control"
                 type="file"
                 accept="image/*"
                 onChange={(e) => handleImageSelect(e, "img_card")}
@@ -162,6 +208,8 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
                 variant="filled"
                 value={newNotice.title}
                 onChange={handleChange}
+                error={!!errors.title}
+                helperText={errors.title}
               />
             </Grid>
             <Grid item xs={12}>
@@ -174,18 +222,8 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
                 rows={4}
                 value={newNotice.description}
                 onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Fecha y Hora"
-                name="date_time"
-                fullWidth
-                variant="filled"
-                type="datetime-local"
-                InputLabelProps={{ shrink: true }}
-                value={newNotice.date_time}
-                onChange={handleChange}
+                error={!!errors.description}
+                helperText={errors.description}
               />
             </Grid>
           </Grid>

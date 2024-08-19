@@ -1,7 +1,8 @@
 import { RouteType } from "./config";
 import { NoticiasPage } from "../pages/noticias/NoticiasPage";
 import { CategoriasPage } from "../pages/categoria/CategoriasPage";
-import { Category, Newspaper } from "@mui/icons-material";
+import { Category, Collections, Newspaper } from "@mui/icons-material";
+import { GaleriaPage } from "../pages/galeria/GaleriaPage";
 
 const appRoutes: RouteType[] = [
   {
@@ -28,6 +29,15 @@ const appRoutes: RouteType[] = [
       icon: <Newspaper />,
     },
   },
+  {
+    path: "/admin-galeria",
+    element: <GaleriaPage />,
+    state: "galeria",
+    sidebarProps: {
+      displayText: "Galerias",
+      icon: <Collections />,
+    },
+  }
 ];
 
 export default appRoutes;

@@ -1,3 +1,4 @@
+
 export interface INotice {
   id_category?: number;
   id_notice: number;
@@ -11,9 +12,10 @@ export interface INotice {
 }
 
 export interface IGallery {
+  id_notice: number;
   id_gallery: number;
   name_image: string;
-  state_gallery: number;
+  state_image: number;
 }
 
 export interface ICategory {

@@ -15,7 +15,7 @@ const Topbar = () => {
   const navigate = useNavigate();
 
   const HandleLogout = () => {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     // Redirigir al usuario a la página de inicio de sesión
     navigate("/login");
   };

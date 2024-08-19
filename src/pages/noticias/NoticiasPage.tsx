@@ -82,7 +82,7 @@ export const NoticiasPage = () => {
     <div>
       <div className="d-flex justify-content-between align-items-center">
         <h2 className="p-2">Listado de Noticias</h2>
-        <Box sx={{ marginRight: "3%" }}>
+        <Box>
           <Button
             variant="contained"
             size="small"
