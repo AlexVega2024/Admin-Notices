@@ -30,7 +30,7 @@ const DialogRegisterCategory: React.FC<DialogRegisterCategoryProps> = ({ open, o
     }
 
     try {
-      setError(null); // Limpiar errores previos
+      setError(null);
       const params = { name };
       const response = await fetchApiNodeNoticies("POST", "register-category", params);
 
@@ -51,11 +51,6 @@ const DialogRegisterCategory: React.FC<DialogRegisterCategoryProps> = ({ open, o
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Registrar Categoría</DialogTitle>
       <DialogContent>
-        {error && (
-          <Alert severity="error" style={{ marginBottom: '16px' }}>
-            {error}
-          </Alert>
-        )}
         <TextField
           autoFocus
           margin="dense"

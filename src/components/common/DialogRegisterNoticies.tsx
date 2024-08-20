@@ -59,8 +59,11 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
     const newErrors: { [key: string]: string } = {};
     if (!newNotice.title) newErrors.title = "El título es obligatorio.";
     if (!newNotice.description) newErrors.description = "La descripción es obligatoria.";
-    if (!newNotice.date_time) newErrors.date_time = "La fecha y hora son obligatorias.";
     if (!newNotice.id_category) newErrors.id_category = "Debe seleccionar una categoría.";
+    
+    // Validación para archivos
+    if (!newNotice.img_card) newErrors.img_card = "Debe cargar una imagen para el card.";
+    if (!newNotice.img_banner) newErrors.img_banner = "Debe cargar una imagen para el banner.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -71,6 +74,14 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
       ...newNotice,
       [e.target.name]: e.target.value,
     });
+
+    // Limpiar error cuando el usuario empieza a llenar el campo
+    if (errors[e.target.name]) {
+      setErrors({
+        ...errors,
+        [e.target.name]: "",
+      });
+    }
   };
 
   const handleCategoryChange = (event: SelectChangeEvent<number>) => {
@@ -78,6 +89,14 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
       ...newNotice,
       id_category: event.target.value as number,
     });
+
+    // Limpiar error cuando el usuario selecciona una categoría
+    if (errors.id_category) {
+      setErrors({
+        ...errors,
+        id_category: "",
+      });
+    }
   };
 
   const handleImageSelect = (
@@ -85,7 +104,6 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
     imageType: "img_card" | "img_banner" 
   ) => {
     const files = e.target.files;
-    console.log("file: ", files);
     if (files && files.length > 0) {
       const file = files[0];
       const extension = file.name.split(".").pop()?.toLowerCase();
@@ -96,31 +114,22 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
           ...prevNotice,
           [imageType]: file,
         }));
+
+        // Limpiar error cuando el usuario selecciona una imagen válida
+        if (errors[imageType]) {
+          setErrors({
+            ...errors,
+            [imageType]: "",
+          });
+        }
       } else {
+        setErrors({
+          ...errors,
+          [imageType]: "Formato de imagen no soportado.",
+        });
         console.error("Formato de imagen no soportado");
       }
     }
-  };
-
-  const handleMultipleImageSelect = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const files = e.target.files;
-    console.log("file: ", files);
-    // if (files && files.length > 0) {
-    //   const file = files[0];
-    //   const extension = file.name.split(".").pop()?.toLowerCase();
-    //   if (
-    //     ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension || "")
-    //   ) {
-    //     setNewNotice((prevNotice) => ({
-    //       ...prevNotice,
-    //       ["name_image"]: file,
-    //     }));
-    //   } else {
-    //     console.error("Formato de imagen no soportado");
-    //   }
-    // }
   };
 
   const handleSubmit = async () => {
@@ -131,15 +140,21 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
     try {
       const formData = new FormData();
       formData.append('id_category', newNotice.id_category!.toString());
-      formData.append('img_banner', newNotice.img_banner as any);
-      formData.append('img_card', newNotice.img_card as any);
+      if (newNotice.img_banner) formData.append('img_banner', newNotice.img_banner);
+      if (newNotice.img_card) formData.append('img_card', newNotice.img_card);
       formData.append('title', newNotice.title);
       formData.append('description', newNotice.description);
       formData.append('state_notice', newNotice.state_notice!.toString());
   
-      await fetchApiNodeNoticies("POST", "register-notice", formData);
-      onSuccess();
-      onClose();
+      const response = await fetchApiNodeNoticies("POST", "register-notice", formData);
+      if (response.success) {
+        alert(response.message);
+        onSuccess();
+        onClose();
+      } else {
+        console.log(response.data);
+        alert(response.message);
+      }
     } catch (error) {
       console.error("Error en el registro:", error);
     }
@@ -189,6 +204,9 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
                 accept="image/*"
                 onChange={(e) => handleImageSelect(e, "img_card")}
               />
+              {errors.img_card && (
+                <FormHelperText error>{errors.img_card}</FormHelperText>
+              )}
             </Grid>
             <Grid item xs={12}>
               <label htmlFor="img_banner_input">Imagen del Banner</label>
@@ -199,6 +217,9 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
                 accept="image/*"
                 onChange={(e) => handleImageSelect(e, "img_banner")}
               />
+              {errors.img_banner && (
+                <FormHelperText error>{errors.img_banner}</FormHelperText>
+              )}
             </Grid>
             <Grid item xs={12}>
               <TextField
@@ -230,10 +251,10 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={onClose}>
           Cancelar
         </Button>
-        <Button onClick={handleSubmit} color="primary">
+        <Button onClick={handleSubmit} variant="contained" color="primary">
           Registrar
         </Button>
       </DialogActions>

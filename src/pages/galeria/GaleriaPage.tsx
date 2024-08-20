@@ -1,17 +1,16 @@
 import { Box, Button, IconButton, Switch, Tooltip } from "@mui/material";
 import { AddCircle, Delete, Edit } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { ICategory, IGallery } from "../../interfaces/Notice.interface";
+import { IGallery } from "../../interfaces/Notice.interface";
 import { fetchApiNodeNoticies } from "../../helpers/fetchData";
-import DialogRegisterCategory from "../../components/common/DialogRegisterCategory";
-import DialogEditCategory from "../../components/common/DialogEditCategory";
 import DialogRegisterGallery from "../../components/common/DialogRegisterGallery";
+import DialogEditGallery from "../../components/common/DialogEditGallery";
 
 export const GaleriaPage = () => {
   const [listDataGalery, setListDataGalery] = useState<IGallery[]>([]);
   const [openRegisterDialog, setOpenRegisterDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [selectedGallery, setSelectedGallery] = useState<ICategory | null>(null);
+  const [selectedGallery, setSelectedGallery] = useState<IGallery | null>(null);
 
   useEffect(() => {
     const handleDataNoticies = async () => {
@@ -45,8 +44,7 @@ export const GaleriaPage = () => {
   const handleCloseRegisterDialog = () => setOpenRegisterDialog(false);
 
   const handleOpenEditDialog = (gallery: IGallery) => {
-    console.log("Data Gallery: ", gallery);
-    // setSelectedCategory(category);
+    setSelectedGallery(gallery);
     setOpenEditDialog(true);
   };
 
@@ -56,22 +54,16 @@ export const GaleriaPage = () => {
       .catch(error => console.error("Error fetching categories:", error));
   };
 
-  // const handleCloseEditDialog = () => {
-  //   setSelectedCategory(null);
-  //   setOpenEditDialog(false);
-  // };
+  const handleCloseEditDialog = () => {
+    setSelectedGallery(null);
+    setOpenEditDialog(false);
+  };
 
-  // const handleDialogSuccess = () => {
-  //   fetchApiNodeNoticies("GET", "get-categories")
-  //     .then(categories => setListDataCategories(categories || []))
-  //     .catch(error => console.error("Error fetching categories:", error));
-  // };
-
-  const handleDeleteCategory= async (id_category: number) => {
+  const handleDeleteGallery = async (id_gallery: number) => {
     if (window.confirm("¿Estás seguro de que deseas eliminar esta imagen de la galería?")) {
       try {
-        // const params = {id_category: id_category};
-        // await fetchApiNodeNoticies("POST", 'delete-category', params);
+        const params = {id_gallery: id_gallery};
+        await fetchApiNodeNoticies("POST", 'delete-gallery', params);
         alert("Se eliminó correctamente la imagen.");
         location.reload();
       } catch (error) {
@@ -129,7 +121,7 @@ export const GaleriaPage = () => {
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Eliminar">
-                      <IconButton onClick={() => handleDeleteCategory(item.id_gallery)}>
+                      <IconButton onClick={() => handleDeleteGallery(item.id_gallery)}>
                         <Delete color="error" />
                       </IconButton>
                     </Tooltip>
@@ -148,14 +140,14 @@ export const GaleriaPage = () => {
       />
 
       {/* Diálogo de edición */}
-      {/* {selectedCategory && (
-        <DialogEditCategory
+      {selectedGallery && (
+        <DialogEditGallery
           open={openEditDialog}
           onClose={handleCloseEditDialog}
-          category={selectedCategory}
+          gallery={selectedGallery}
           onSuccess={handleDialogSuccess}
         />
-      )} */}
+      )}
     </div>
   );
 };

@@ -3,7 +3,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
   Button,
   Alert,
   Box,
@@ -12,7 +11,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormHelperText,
   SelectChangeEvent,
 } from "@mui/material";
 import { useEffect, useState } from "react";
@@ -52,12 +50,12 @@ const DialogRegisterGallery: React.FC<DialogRegisterGalleryProps> = ({
     handleNoticies();
   }, []);
 
-  const validateName = (name: string) => {
-    if (name.trim() === "") {
-      return "El nombre de la galería es obligatorio.";
+  const validateForm = () => {
+    if (!newGallery.id_notice) {
+      return "Debe seleccionar una noticia.";
     }
-    if (name.length < 3) {
-      return "El nombre debe tener al menos 3 caracteres.";
+    if (!newGallery.name_image) {
+      return "Debe cargar al menos una imagen.";
     }
     return null;
   };
@@ -74,7 +72,6 @@ const DialogRegisterGallery: React.FC<DialogRegisterGalleryProps> = ({
     imageType: string
   ) => {
     const files = e.target.files;
-    console.log("file: ", files);
     if (files && files.length > 0) {
       const file = files[0];
       const extension = file.name.split(".").pop()?.toLowerCase();
@@ -83,23 +80,34 @@ const DialogRegisterGallery: React.FC<DialogRegisterGalleryProps> = ({
       ) {
         setNewGallery((prevGallery) => ({
           ...prevGallery,
-          [imageType]: file
+          [imageType]: file,
         }));
       } else {
-        console.error("Formato de imagen no soportado");
+        setError("Formato de imagen no soportado. Solo se permiten jpg, jpeg, png, gif, webp, svg.");
       }
     }
   };
 
   const handleSubmit = async () => {
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
 
     try {
       const formData = new FormData();
-      formData.append('id_notice', newGallery.id_notice!.toString());
-      formData.append('name_image', newGallery.name_image);
-      await fetchApiNodeNoticies("POST", "register-gallery", formData);
-      onSuccess();
-      onClose();
+      formData.append("id_notice", newGallery.id_notice!.toString());
+      formData.append("name_image", newGallery.name_image);
+      const response = await fetchApiNodeNoticies("POST", "register-gallery", formData);
+      if (response.success) {
+        alert(response.message);
+        onSuccess();
+        onClose();
+      } else {
+        console.log(response.data);
+        alert(response.message);
+      }
     } catch (error) {
       console.error("Error en el registro:", error);
     }
@@ -117,24 +125,18 @@ const DialogRegisterGallery: React.FC<DialogRegisterGalleryProps> = ({
         <Box sx={{ width: 500 }}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <FormControl
-                fullWidth
-                variant="filled"
-              >
+              <FormControl fullWidth variant="filled">
                 <InputLabel id="noticie-label">Elija una noticia</InputLabel>
                 <Select
                   labelId="noticie-label"
                   id="noticie-select"
                   name="id_noticie"
-                  value={newGallery.id_notice || ""}
+                  value={newGallery.id_notice}
                   onChange={handleNoticieChange}
                   label="Noticia"
                 >
                   {listNoticies.map((noticie: INotice) => (
-                    <MenuItem
-                      key={noticie.id_notice}
-                      value={noticie.id_notice}
-                    >
+                    <MenuItem key={noticie.id_notice} value={noticie.id_notice}>
                       {noticie.title}
                     </MenuItem>
                   ))}
@@ -142,7 +144,9 @@ const DialogRegisterGallery: React.FC<DialogRegisterGalleryProps> = ({
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <label htmlFor="img_card_input" className="my-2">Carga una o varias imágenes:</label>
+              <label htmlFor="img_card_input" className="my-2">
+                Carga una imagen:
+              </label>
               <input
                 id="img_card_input"
                 className="form-control"
@@ -157,7 +161,7 @@ const DialogRegisterGallery: React.FC<DialogRegisterGalleryProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleSubmit}>Registrar</Button>
+        <Button onClick={handleSubmit} variant="contained" color="primary">Registrar</Button>
       </DialogActions>
     </Dialog>
   );

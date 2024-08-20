@@ -172,25 +172,13 @@ const DialogEditNoticies = ({
               />
             </Grid>
           </Grid>
-          {/* <Grid item xs={12} mt={1}>
-            <TextField
-              label="Fecha y Hora"
-              name="date_time"
-              fullWidth
-              variant="filled"
-              type="datetime-local"
-              InputLabelProps={{ shrink: true }}
-              value={dateTime}
-              onChange={handleChange}
-            />
-          </Grid> */}
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={onClose}>
           Cancelar
         </Button>
-        <Button onClick={handleSubmit} color="primary">
+        <Button onClick={handleSubmit} variant="contained" color="primary">
           Guardar
         </Button>
       </DialogActions>

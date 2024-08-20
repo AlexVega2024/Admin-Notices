@@ -10,26 +10,29 @@ import { assets } from "../../assets";
 const LoginPage = () => {
   const navigate = useNavigate();
   const initialForm = {
-    user: '',
-    password: ''
+    user: "",
+    password: "",
   };
 
   const { user, password, onInputChange, reset }: any = useForm(initialForm);
   const { setDataUser }: any = useContext(UserContext);
 
-  const [errors, setErrors] = useState<{ user: string, password: string }>({ user: '', password: '' });
+  const [errors, setErrors] = useState<{ user: string; password: string }>({
+    user: "",
+    password: "",
+  });
 
   const validateForm = () => {
     let isValid = true;
-    const newErrors = { user: '', password: '' };
+    const newErrors = { user: "", password: "" };
 
     if (!user.trim()) {
-      newErrors.user = 'El usuario es requerido';
+      newErrors.user = "El usuario es requerido";
       isValid = false;
     }
 
     if (!password.trim()) {
-      newErrors.password = 'La contraseña es requerida';
+      newErrors.password = "La contraseña es requerida";
       isValid = false;
     }
 
@@ -42,43 +45,41 @@ const LoginPage = () => {
     if (!validateForm()) {
       return;
     }
-  
+
     try {
-      const params = { 'usuario': user, 'clave': password };
-      
+      const params = { usuario: user, clave: password };
 
       const response = await fetch("https://192.100.10.49:8099/api/login", {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(params),
       });
-  
-      
+
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
-  
-      
+
       const data = await response.json();
       console.log(data);
-  
-      
+
       if (data.token != null) {
-        sessionStorage.setItem('token', data.token); 
+        sessionStorage.setItem("token", data.token);
         setDataUser(data.token);
-        navigate('/');
+        navigate("/");
       } else if (data.error) {
-        setErrors({ user: 'Usuario y/o contraseña son incorrectos', password: '' });
+        setErrors({
+          user: "Usuario y/o contraseña son incorrectos",
+          password: "",
+        });
       }
     } catch (error) {
-      console.error('Error al loguearse:', error);
+      console.error("Error al loguearse:", error);
     } finally {
       reset(); // Limpia los campos del formulario
     }
   };
-  
 
   return (
     <Grid
@@ -88,26 +89,26 @@ const LoginPage = () => {
       spacing={0}
       sx={{ height: "100vh", padding: 2 }}
     >
-      <Grid
-        item
-        xs={12}
-        sm={8}
-        md={6}
-        lg={4}
-      >
+      <Grid item xs={12} sm={8} md={6} lg={4}>
         <Box
           sx={{
-            width: '100%',
+            width: "100%",
             border: "1px solid black",
             borderRadius: "5px",
             backgroundColor: "#e4e9f7",
             padding: 3,
             boxShadow: 3,
-            textAlign: 'center'
+            textAlign: "center",
           }}
         >
-          <Box sx={{ marginBottom: 4 }}>
-            <ImageComponent urlImage={assets.images.logoNegro} typeImage="login" name="logo"/>
+          <Box>
+            <ImageComponent
+              urlImage={assets.images.logoNegro}
+              widthImage={200}
+              typeImage="login"
+              name="logo"
+              objectFit="scale-down"
+            />
           </Box>
           <Typography variant="h4" color="black" gutterBottom>
             Login
