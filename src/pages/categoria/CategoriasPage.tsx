@@ -1,42 +1,54 @@
-import { Box, Button, IconButton, Switch, Tooltip } from "@mui/material";
-import { AddCircle, Delete, Edit } from "@mui/icons-material";
-import { useEffect, useState } from "react";
-import { ICategory } from "../../interfaces/Notice.interface";
-import { fetchApiNodeNoticies } from "../../helpers/fetchData";
-import DialogRegisterCategory from "../../components/common/DialogRegisterCategory";
-import DialogEditCategory from "../../components/common/DialogEditCategory";
+import { useEffect, useState } from 'react';
+import { Box, Button, IconButton, Switch, Tooltip } from '@mui/material';
+import { AddCircle, Delete, Edit } from '@mui/icons-material';
+import { ICategory } from '../../interfaces/Notice.interface';
+import { fetchApiNodeNoticies } from '../../helpers/fetchData';
+import DialogRegisterCategory from '../../components/common/DialogRegisterCategory';
+import DialogEditCategory from '../../components/common/DialogEditCategory';
+import SnackbarNotification from '../../components/common/SnackBarComponent';
+import { useDispatch } from 'react-redux';
+import { openSnackbar } from '../../redux/features/snackbarSlice';
 
 export const CategoriasPage = () => {
+  const dispatch = useDispatch();
   const [listDataCategories, setListDataCategories] = useState<ICategory[]>([]);
   const [openRegisterDialog, setOpenRegisterDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ICategory | null>(null);
 
-  useEffect(() => {
-    const handleDataNoticies = async () => {
-      try {
-        const categories = await fetchApiNodeNoticies("GET", "get-categories");
-        setListDataCategories(categories || []);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
+  const handleDataNoticies = async () => {
+    try {
+      const categories = await fetchApiNodeNoticies("GET", "get-categories");
+      if (categories.success) {
+        setListDataCategories(categories.data);
+      } else {
         setListDataCategories([]);
+        dispatch(openSnackbar({ message: categories.message, severity: 'error' }));
       }
-    };
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  useEffect(() => {
     handleDataNoticies();
-  }, []);
+  }, [dispatch]);
 
   const handleSwitchChange = async (checked: boolean, id_category: number) => {
-    if (id_category) {
-      try {
-        const params = {
-          state_categ: checked ? 1 : 0,
-          id_category: id_category,
-        };
-        await fetchApiNodeNoticies("POST", "state-category", params);
-        location.reload();
-      } catch (error) {
-        console.error("Error updating category state:", error);
+    try {
+      const params = {
+        state_categ: checked ? 1 : 0,
+        id_category: id_category,
+      };
+      const response = await fetchApiNodeNoticies("POST", "state-category", params);
+      if (response.success) {
+        dispatch(openSnackbar({ message: response.message, severity: 'success' }));
+        await handleDataNoticies();
+      } else {
+        dispatch(openSnackbar({ message: response.message, severity: 'error' }));
       }
+    } catch (error) {
+      console.error("Error updating category state:", error);
     }
   };
 
@@ -53,21 +65,22 @@ export const CategoriasPage = () => {
     setOpenEditDialog(false);
   };
 
-  const handleDialogSuccess = () => {
-    fetchApiNodeNoticies("GET", "get-categories")
-      .then(categories => setListDataCategories(categories || []))
-      .catch(error => console.error("Error fetching categories:", error));
+  const handleDialogSuccess = async () => {
+    await handleDataNoticies();
   };
 
-  const handleDeleteCategory= async (id_category: number) => {
+  const handleDeleteCategory = async (id_category: number) => {
     if (window.confirm("¿Estás seguro de que deseas eliminar esta categoría?")) {
       try {
-        const params = {id_category: id_category};
-        await fetchApiNodeNoticies("POST", 'delete-category', params);
-        alert("Se eliminó correctamente la categoría.");
-        location.reload();
+        const params = { id_category };
+        const deleteCategory = await fetchApiNodeNoticies("POST", 'delete-category', params);
+        if (deleteCategory.success) {
+          dispatch(openSnackbar({ message: deleteCategory.message, severity: 'success' }));
+          await handleDataNoticies();
+        }
       } catch (error) {
         console.error("Error eliminando la categoría:", error);
+        dispatch(openSnackbar({ message: "Verifica que no existan noticias que dependan del id de esta categoría.", severity: 'error' }));
       }
     }
   };
@@ -75,7 +88,7 @@ export const CategoriasPage = () => {
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center">
-        <h2 className="p-2">Listado de Categorías</h2>
+        <h3 className="p-2">Listado de Categorías</h3>
         <Box>
           <Button
             variant="contained"
@@ -99,34 +112,44 @@ export const CategoriasPage = () => {
             </tr>
           </thead>
           <tbody className="table-group-divider text-center">
-            {listDataCategories.map((item: ICategory) => (
-              <tr key={item.id_category}>
-                <td>{item.id_category}</td>
-                <td>{item.name}</td>
-                <td>
-                  <Tooltip title="Inactivar">
-                    <Switch
-                      checked={item.state_categ === 1}
-                      onChange={(e) => handleSwitchChange(e.target.checked, item.id_category)}
-                    />
-                  </Tooltip>
-                </td>
-                <td>
-                  <div>
-                    <Tooltip title="Editar">
-                      <IconButton onClick={() => handleOpenEditDialog(item)}>
-                        <Edit color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar">
-                      <IconButton onClick={() => handleDeleteCategory(item.id_category)}>
-                        <Delete color="error" />
-                      </IconButton>
-                    </Tooltip>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {
+              listDataCategories.length > 0 
+              ?
+              (
+                listDataCategories.map((item: ICategory) => (
+                  <tr key={item.id_category}>
+                    <td>{item.id_category}</td>
+                    <td>{item.name}</td>
+                    <td>
+                      <Tooltip title="Inactivar">
+                        <Switch
+                          checked={item.state_categ === 1}
+                          onChange={(e) => handleSwitchChange(e.target.checked, item.id_category)}
+                        />
+                      </Tooltip>
+                    </td>
+                    <td>
+                      <div>
+                        <Tooltip title="Editar">
+                          <IconButton onClick={() => handleOpenEditDialog(item)}>
+                            <Edit color="primary" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar">
+                          <IconButton onClick={() => handleDeleteCategory(item.id_category)}>
+                            <Delete color="error" />
+                          </IconButton>
+                        </Tooltip>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )
+              :
+              (
+                <tr></tr>
+              )
+            }
           </tbody>
         </table>
       </div>
@@ -146,6 +169,9 @@ export const CategoriasPage = () => {
           onSuccess={handleDialogSuccess}
         />
       )}
+
+      {/* Snackbar para mensajes */}
+      <SnackbarNotification />
     </div>
   );
 };

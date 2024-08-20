@@ -15,17 +15,17 @@ function App() {
           <Route
             path="/login"
             element={
-              // <PublicRoute>
+              <PublicRoute>
                 <LoginPage />
-              // </PublicRoute>
+              </PublicRoute>
             }
           />
           <Route
             path="/"
             element={
-              // <PrivateRoute>
+              <PrivateRoute>
                 <Header />
-              // </PrivateRoute>
+              </PrivateRoute>
             }
           >
             {routes}

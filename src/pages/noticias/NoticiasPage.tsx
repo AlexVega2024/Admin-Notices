@@ -6,25 +6,34 @@ import { INotice } from "../../interfaces/Notice.interface";
 import DialogRegisterNoticies from "../../components/common/DialogRegisterNoticies";
 import DialogEditCategories from "../../components/common/DialogEditNoticies";
 import { formatDateTime } from "../../helpers/formatDate";
+import { useDispatch } from "react-redux";
+import { openSnackbar } from "../../redux/features/snackbarSlice";
+import SnackbarNotification from "../../components/common/SnackBarComponent";
 
 export const NoticiasPage = () => {
+  const dispatch = useDispatch();
   const [listDataNotices, setListDataNotices] = useState<INotice[]>([]);
   const [openModal, setOpenModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<INotice | null>(null);
 
-  useEffect(() => {
-    const handleDataNoticies = async () => {
-      try {
-        const noticies = await fetchApiNodeNoticies("GET", "get-noticies");
-        setListDataNotices(noticies || []);
-      } catch (error) {
-        console.error("Error fetching notices:", error);
-        setListDataNotices([]);
+  const handleDataNoticies = async () => {
+    try {
+      const noticies = await fetchApiNodeNoticies("GET", "get-noticies");
+      if (noticies.success) {
+        setListDataNotices(noticies.data);
       }
-    };
+    } catch (error) {
+      dispatch(
+        openSnackbar({ message: "Error al listar las noticias.", severity: "error" })
+      );
+      setListDataNotices([]);
+    }
+  };
+
+  useEffect(() => {
     handleDataNoticies();
-  }, []);
+  }, [dispatch]);
 
   const handleSwitchChange = async (
     id_notice: number,
@@ -38,10 +47,25 @@ export const NoticiasPage = () => {
           id_category: id_category,
           state_notice: checked ? 1 : 0,
         };
-        await fetchApiNodeNoticies("POST", "state-noticie", params);
-        location.reload();
+        const response = await fetchApiNodeNoticies(
+          "POST",
+          "state-noticie",
+          params
+        );
+        if (response.success) {
+          dispatch(
+            openSnackbar({ message: response.message, severity: "success" })
+          );
+          await handleDataNoticies();
+        } else {
+          dispatch(
+            openSnackbar({ message: response.message, severity: "error" })
+          );
+        }
       } catch (error) {
-        console.error("Error updating notice state:", error);
+        dispatch(
+          openSnackbar({ message: "Error al actualizar el estado de la noticia.", severity: "error" })
+        );
       }
     }
   };
@@ -59,21 +83,32 @@ export const NoticiasPage = () => {
     setOpenEditModal(false);
   };
 
-  const handleModalSuccess = () => {
-    fetchApiNodeNoticies("GET", "get-noticies")
-      .then((noticies) => setListDataNotices(noticies || []))
-      .catch((error) => console.error("Error fetching notices:", error));
+  const handleModalSuccess = async () => {
+    await handleDataNoticies();
   };
 
   const handleDeleteNotice = async (id_notice: number) => {
     if (window.confirm("¿Estás seguro de que deseas eliminar esta noticia?")) {
       try {
-        const params = {id_notice: id_notice};
-        await fetchApiNodeNoticies("POST", 'delete-noticie', params);
-        alert("Se eliminó correctamente la noticia.");
-        location.reload();
+        const params = { id_notice: id_notice };
+        const deleteNoticie = await fetchApiNodeNoticies(
+          "POST",
+          "delete-noticie",
+          params
+        );
+        if (deleteNoticie.success) {
+          dispatch(
+            openSnackbar({
+              message: deleteNoticie.message,
+              severity: "success",
+            })
+          );
+          await handleDataNoticies();
+        }
       } catch (error) {
-        console.error("Error eliminando la noticia:", error);
+        dispatch(
+          openSnackbar({ message: "Verifica que no tengas imágenes que dependan del id de esta noticia.", severity: "error" })
+        );
       }
     }
   };
@@ -81,7 +116,7 @@ export const NoticiasPage = () => {
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center">
-        <h2 className="p-2">Listado de Noticias</h2>
+        <h3 className="p-2">Listado de Noticias</h3>
         <Box>
           <Button
             variant="contained"
@@ -95,7 +130,6 @@ export const NoticiasPage = () => {
         </Box>
       </div>
 
-      {/* Contenedor responsivo para la tabla */}
       <div className="table-responsive">
         <table className="table table-striped">
           <thead
@@ -110,48 +144,54 @@ export const NoticiasPage = () => {
               <th scope="col">Descripción</th>
               <th scope="col">Fecha y Hora</th>
               <th scope="col">Estado</th>
+              <th scope="col">Id Categoría</th>
               <th scope="col">Acciones</th>
             </tr>
           </thead>
           <tbody className="table-group-divider text-center">
-            {listDataNotices.map((item: INotice) => (
-              <tr key={item.id_notice}>
-                <td>{item.id_notice}</td>
-                <td>{item.img_banner}</td>
-                <td>{item.img_card}</td>
-                <td>{item.title}</td>
-                <td>{item.description}</td>
-                <td>{formatDateTime(item.date_time!)}</td>
-                <td>
-                  <Switch
-                    checked={item.state_notice === 1}
-                    onChange={(e) =>
-                      handleSwitchChange(
-                        item.id_notice,
-                        item.id_category!,
-                        e.target.checked
-                      )
-                    }
-                  />
-                </td>
-                <td>
-                  <div className="d-flex justify-content-center align-items-center">
-                    <Tooltip title="Editar">
-                      <IconButton onClick={() => handleOpenEditModal(item)}>
-                        <Edit color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar">
-                      <IconButton
-                        onClick={() => handleDeleteNotice(item.id_notice)}
-                      >
-                        <Delete color="error" />
-                      </IconButton>
-                    </Tooltip>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {listDataNotices.length > 0 ? (
+              listDataNotices.map((item: INotice) => (
+                <tr key={item.id_notice}>
+                  <td>{item.id_notice}</td>
+                  <td>{item.img_banner}</td>
+                  <td>{item.img_card}</td>
+                  <td>{item.title}</td>
+                  <td>{item.description}</td>
+                  <td>{formatDateTime(item.date_time!)}</td>
+                  <td>
+                    <Switch
+                      checked={item.state_notice === 1}
+                      onChange={(e) =>
+                        handleSwitchChange(
+                          item.id_notice,
+                          item.id_category!,
+                          e.target.checked
+                        )
+                      }
+                    />
+                  </td>
+                  <td>{item.id_category}</td>
+                  <td>
+                    <div className="d-flex justify-content-center align-items-center">
+                      <Tooltip title="Editar">
+                        <IconButton onClick={() => handleOpenEditModal(item)}>
+                          <Edit color="primary" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Eliminar">
+                        <IconButton
+                          onClick={() => handleDeleteNotice(item.id_notice)}
+                        >
+                          <Delete color="error" />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr></tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -172,6 +212,10 @@ export const NoticiasPage = () => {
           onSuccess={handleModalSuccess}
         />
       )}
+      
+      {/* Snackbar para mensajes */}
+      <SnackbarNotification />
+
     </div>
   );
 };

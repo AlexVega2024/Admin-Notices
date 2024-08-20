@@ -1,6 +1,8 @@
-import { Dialog, DialogActions, DialogContent, DialogTitle, TextField, Button, Alert } from "@mui/material";
-import { useState } from "react";
+import { Dialog, DialogActions, DialogContent, DialogTitle, TextField, Button } from "@mui/material";
+import { useEffect, useState } from "react";
 import { fetchApiNodeNoticies } from "../../helpers/fetchData";
+import { useDispatch } from "react-redux";
+import { openSnackbar } from "../../redux/features/snackbarSlice";
 
 interface DialogRegisterCategoryProps {
   open: boolean;
@@ -9,8 +11,23 @@ interface DialogRegisterCategoryProps {
 }
 
 const DialogRegisterCategory: React.FC<DialogRegisterCategoryProps> = ({ open, onClose, onSuccess }) => {
+  const dispatch = useDispatch();
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setName("");
+      setError(null);
+    }
+  }, [open]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+    if (error) {
+      setError(null); 
+    }
+  };
 
   const validateName = (name: string) => {
     if (name.trim() === "") {
@@ -21,6 +38,7 @@ const DialogRegisterCategory: React.FC<DialogRegisterCategoryProps> = ({ open, o
     }
     return null;
   };
+  
 
   const handleRegister = async () => {
     const validationError = validateName(name);
@@ -31,25 +49,23 @@ const DialogRegisterCategory: React.FC<DialogRegisterCategoryProps> = ({ open, o
 
     try {
       setError(null);
-      const params = { name };
+      const params = { name: name };
       const response = await fetchApiNodeNoticies("POST", "register-category", params);
-
       if (response.success) {
-        alert(response.message);
         onSuccess();
         onClose();
+        dispatch(openSnackbar({ message: response.message, severity: 'success' }));
       } else {
-        console.log(response.data);
-        alert(response.message);
+        dispatch(openSnackbar({ message: response.message, severity: 'error' }));
       }
     } catch (error) {
-      console.error("Error registrando categoría:", error);
+      console.log("Error en el registro: ", error);
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Registrar Categoría</DialogTitle>
+      <DialogTitle sx={{ fontWeight: "bold"}}>Registrar Categoría</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -60,7 +76,7 @@ const DialogRegisterCategory: React.FC<DialogRegisterCategoryProps> = ({ open, o
           fullWidth
           variant="standard"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={handleChange}
           helperText={error}
           error={!!error}
         />

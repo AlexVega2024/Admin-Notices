@@ -5,37 +5,48 @@ import { IGallery } from "../../interfaces/Notice.interface";
 import { fetchApiNodeNoticies } from "../../helpers/fetchData";
 import DialogRegisterGallery from "../../components/common/DialogRegisterGallery";
 import DialogEditGallery from "../../components/common/DialogEditGallery";
+import { useDispatch } from "react-redux";
+import { openSnackbar } from "../../redux/features/snackbarSlice";
+import SnackbarNotification from "../../components/common/SnackBarComponent";
 
 export const GaleriaPage = () => {
+  const dispatch = useDispatch();
   const [listDataGalery, setListDataGalery] = useState<IGallery[]>([]);
   const [openRegisterDialog, setOpenRegisterDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedGallery, setSelectedGallery] = useState<IGallery | null>(null);
 
-  useEffect(() => {
-    const handleDataNoticies = async () => {
-      try {
-        const gallery = await fetchApiNodeNoticies("GET", "get-galleries");
-        setListDataGalery(gallery || []);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        setListDataGalery([]);
+  const handleDataGalleries = async () => {
+    try {
+      const gallery = await fetchApiNodeNoticies("GET", "get-galleries");
+      if (gallery.success) {
+        setListDataGalery(gallery.data);
       }
-    };
-    handleDataNoticies();
-  }, []);
+    } catch (error) {
+      dispatch(openSnackbar({ message: "Error al listar la galería de imagenes.", severity: 'error' }));
+      setListDataGalery([]);
+    }
+  };
 
-  const handleSwitchChange = async (checked: boolean, id_notice: number) => {
+  useEffect(() => {
+    handleDataGalleries();
+  }, [dispatch]);
+
+  const handleSwitchChange = async (checked: boolean, id_notice: number, id_gallery: number) => {
     if (id_notice) {
       try {
         const params = {
           state_image: checked ? 1 : 0,
           id_notice: id_notice,
+          id_gallery: id_gallery
         };
-        await fetchApiNodeNoticies("POST", "state-gallery", params);
-        location.reload();
+        const stateGallery = await fetchApiNodeNoticies("POST", "state-gallery", params);
+        if (stateGallery.success) {
+          dispatch(openSnackbar({ message: stateGallery.message, severity: 'success' }));
+          await handleDataGalleries();
+        }
       } catch (error) {
-        console.error("Error updating category state:", error);
+        dispatch(openSnackbar({ message: "Error en el estado de la galería", severity: 'error' }));
       }
     }
   };
@@ -48,10 +59,8 @@ export const GaleriaPage = () => {
     setOpenEditDialog(true);
   };
 
-  const handleDialogSuccess = () => {
-    fetchApiNodeNoticies("GET", "get-galleries")
-      .then(galleries => setListDataGalery(galleries || []))
-      .catch(error => console.error("Error fetching categories:", error));
+  const handleDialogSuccess = async () => {
+    await handleDataGalleries();
   };
 
   const handleCloseEditDialog = () => {
@@ -63,11 +72,14 @@ export const GaleriaPage = () => {
     if (window.confirm("¿Estás seguro de que deseas eliminar esta imagen de la galería?")) {
       try {
         const params = {id_gallery: id_gallery};
-        await fetchApiNodeNoticies("POST", 'delete-gallery', params);
-        alert("Se eliminó correctamente la imagen.");
-        location.reload();
+        const deleteGallery = await fetchApiNodeNoticies("POST", 'delete-gallery', params);
+        if (deleteGallery.success) {
+          dispatch(openSnackbar({ message: deleteGallery.message, severity: 'success' }));
+          await handleDataGalleries();
+        }
       } catch (error) {
         console.error("Error eliminando la imagen:", error);
+        dispatch(openSnackbar({ message: "Error al eliminar la imagen de la galería.", severity: 'error' }));
       }
     }
   };
@@ -75,7 +87,7 @@ export const GaleriaPage = () => {
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center">
-        <h2 className="p-2">Listado de Imágenes</h2>
+        <h3 className="p-2">Listado de Imágenes</h3>
         <Box>
           <Button
             variant="contained"
@@ -108,7 +120,7 @@ export const GaleriaPage = () => {
                   <Tooltip title="Inactivar">
                     <Switch
                       checked={item.state_image === 1}
-                      onChange={(e) => handleSwitchChange(e.target.checked, item.id_gallery)}
+                      onChange={(e) => handleSwitchChange(e.target.checked, item.id_notice, item.id_gallery)}
                     />
                   </Tooltip>
                 </td>
@@ -148,6 +160,10 @@ export const GaleriaPage = () => {
           onSuccess={handleDialogSuccess}
         />
       )}
+
+      {/* Snackbar para mensajes */}
+      <SnackbarNotification />
+
     </div>
   );
 };

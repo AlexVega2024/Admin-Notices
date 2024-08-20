@@ -16,6 +16,8 @@ import {
 import { useEffect, useState } from "react";
 import { fetchApiNodeNoticies } from "../../helpers/fetchData";
 import { IGallery, INotice } from "../../interfaces/Notice.interface";
+import { useDispatch } from "react-redux";
+import { openSnackbar } from "../../redux/features/snackbarSlice";
 
 interface DialogRegisterGalleryProps {
   open: boolean;
@@ -28,6 +30,7 @@ const DialogRegisterGallery: React.FC<DialogRegisterGalleryProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const dispatch = useDispatch();
   const [listNoticies, setListNoticies] = useState<INotice[]>([]);
   const [newGallery, setNewGallery] = useState<IGallery>({
     id_gallery: 0,
@@ -37,18 +40,28 @@ const DialogRegisterGallery: React.FC<DialogRegisterGalleryProps> = ({
   });
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const handleNoticies = async () => {
-      try {
-        const noticies = await fetchApiNodeNoticies("GET", "get-noticies");
-        setListNoticies(noticies || []);
-      } catch (error) {
-        console.error("Error fetching noticies:", error);
-        setListNoticies([]);
+  const handleNoticies = async () => {
+    try {
+      const noticies = await fetchApiNodeNoticies("GET", "get-noticies");
+      if (noticies.success) {
+        setListNoticies(noticies.data);
       }
-    };
+    } catch (error) {
+      setListNoticies([]);
+      dispatch(openSnackbar({ message: "Error al listar las noticias en el select.", severity: 'error' }));
+    }
+  };
+
+  useEffect(() => {
+    setNewGallery({
+      id_gallery: 0,
+      id_notice: 0,
+      name_image: "",
+      state_image: 1,
+    });
+    setError(null);
     handleNoticies();
-  }, []);
+  }, [open]);
 
   const validateForm = () => {
     if (!newGallery.id_notice) {
@@ -99,23 +112,20 @@ const DialogRegisterGallery: React.FC<DialogRegisterGalleryProps> = ({
       const formData = new FormData();
       formData.append("id_notice", newGallery.id_notice!.toString());
       formData.append("name_image", newGallery.name_image);
-      const response = await fetchApiNodeNoticies("POST", "register-gallery", formData);
-      if (response.success) {
-        alert(response.message);
+      const registerGallery = await fetchApiNodeNoticies("POST", "register-gallery", formData);
+      if (registerGallery.success) {
         onSuccess();
         onClose();
-      } else {
-        console.log(response.data);
-        alert(response.message);
+        dispatch(openSnackbar({ message: registerGallery.message, severity: 'success' }));
       }
     } catch (error) {
-      console.error("Error en el registro:", error);
+      dispatch(openSnackbar({ message: "Error al registrar la imagen en la galería.", severity: 'error' }));
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Registrar Galería</DialogTitle>
+      <DialogTitle sx={{ fontWeight: "bold"}}>Registrar Galería</DialogTitle>
       <DialogContent>
         {error && (
           <Alert severity="error" style={{ marginBottom: "16px" }}>
@@ -144,7 +154,7 @@ const DialogRegisterGallery: React.FC<DialogRegisterGalleryProps> = ({
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <label htmlFor="img_card_input" className="my-2">
+              <label htmlFor="img_card_input" className="my-2 fw-bold">
                 Carga una imagen:
               </label>
               <input

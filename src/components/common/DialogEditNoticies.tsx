@@ -11,8 +11,10 @@ import {
 } from "@mui/material";
 import { INotice } from "../../interfaces/Notice.interface";
 import { ImageComponent } from "./ImageComponent";
-import { assets, urlBase } from "../../assets";
 import { fetchApiNodeNoticies } from "../../helpers/fetchData";
+import { useDispatch } from "react-redux";
+import { openSnackbar } from "../../redux/features/snackbarSlice";
+import { urlBase } from "../../assets";
 
 interface EditNoticeModalProps {
   open: boolean;
@@ -27,6 +29,7 @@ const DialogEditNoticies = ({
   notice,
   onSuccess,
 }: EditNoticeModalProps) => {
+  const dispatch = useDispatch();
   const [editedNotice, setEditedNotice] = useState<INotice>({
     id_category: 0,
     id_notice: 0,
@@ -36,6 +39,8 @@ const DialogEditNoticies = ({
     description: "",
     state_notice: 1,
   });
+  const [newFileImgCard, setNewFileImgCard] = useState<string | undefined>(undefined);
+  const [newFileImgBanner, setNewFileImgBanner] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (notice) {
@@ -59,6 +64,12 @@ const DialogEditNoticies = ({
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
+      const fileURL = URL.createObjectURL(file);
+      if (imageType === "img_card") {
+        setNewFileImgCard(fileURL);
+      } else {
+        setNewFileImgBanner(fileURL);
+      }
       const extension = file.name.split(".").pop()?.toLowerCase();
       if (
         ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension || "")
@@ -76,29 +87,34 @@ const DialogEditNoticies = ({
   const handleSubmit = async () => {
     try {
       const formData = new FormData();
-      formData.append('img_banner', editedNotice?.img_banner!);
-      formData.append('img_card', editedNotice?.img_card!);
-      formData.append('title', editedNotice?.title!);
-      formData.append('description', editedNotice?.description!);
-      formData.append('id_category', (editedNotice.id_category ?? 0).toString());
-      formData.append('id_notice', editedNotice?.id_notice?.toString());
+      formData.append('img_card', editedNotice.img_card);
+      formData.append('img_banner', editedNotice.img_banner!);
+      formData.append('title', editedNotice.title);
+      formData.append('description', editedNotice.description);
+      formData.append('id_category', editedNotice.id_category!.toString());
+      formData.append('id_notice', editedNotice.id_notice.toString());
 
-      await fetchApiNodeNoticies("POST", "update-noticie", formData);
-      onSuccess();
-      onClose();
+      const updateNotice = await fetchApiNodeNoticies("POST", "update-noticie", formData);
+      if (updateNotice.success) {
+        onSuccess();
+        onClose();
+        dispatch(openSnackbar({ message: updateNotice.message, severity: 'success' }));
+      } else {
+        dispatch(openSnackbar({ message: updateNotice.message, severity: 'error' }));
+      }
     } catch (error) {
-      console.error("Error en el registro:", error);
+      console.error("Error en la actualización:", error);
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Editar Noticia</DialogTitle>
+      <DialogTitle sx={{ fontWeight: "bold"}}>Editar Noticia</DialogTitle>
       <DialogContent>
         <Box sx={{ width: 500 }}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <label htmlFor="img_card_input">Imagen del Card</label>
+              <label htmlFor="img_card_input" className="my-2 fw-bold">Imagen del Card:</label>
               <Box
                 display="flex"
                 justifyContent="center"
@@ -106,13 +122,9 @@ const DialogEditNoticies = ({
                 my={1}
               >
                 <ImageComponent
-                  urlImage={
-                    editedNotice?.img_card
-                      ? `${urlBase}${editedNotice?.img_card}`
-                      : assets.svg.emptySvg
-                  }
+                  urlImage={newFileImgCard || `${urlBase}${editedNotice.img_card}`}
                   typeImage="img-card"
-                  name={editedNotice?.img_card!}
+                  name={editedNotice.img_card}
                 />
               </Box>
               <input
@@ -124,7 +136,7 @@ const DialogEditNoticies = ({
               />
             </Grid>
             <Grid item xs={12}>
-              <label htmlFor="img_banner_input">Imagen del Banner</label>
+              <label htmlFor="img_banner_input" className="my-2 fw-bold">Imagen del Banner:</label>
               <Box
                 display="flex"
                 justifyContent="center"
@@ -132,13 +144,9 @@ const DialogEditNoticies = ({
                 my={1}
               >
                 <ImageComponent
-                  urlImage={
-                    editedNotice?.img_card
-                      ? `${urlBase}${editedNotice?.img_banner}`
-                      : assets.svg.emptySvg
-                  }
+                  urlImage={newFileImgBanner || `${urlBase}${editedNotice.img_banner}`}
                   typeImage="img-banner"
-                  name={editedNotice?.img_banner!}
+                  name={editedNotice.img_banner!}
                 />
               </Box>
               <input
@@ -155,7 +163,7 @@ const DialogEditNoticies = ({
                 name="title"
                 fullWidth
                 variant="outlined"
-                value={editedNotice?.title || ""}
+                value={editedNotice.title || ""}
                 onChange={handleChange}
               />
             </Grid>
@@ -167,7 +175,7 @@ const DialogEditNoticies = ({
                 variant="outlined"
                 multiline
                 rows={4}
-                value={editedNotice?.description || ""}
+                value={editedNotice.description || ""}
                 onChange={handleChange}
               />
             </Grid>

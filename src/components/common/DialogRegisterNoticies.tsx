@@ -17,6 +17,10 @@ import {
 } from "@mui/material";
 import { ICategory, INotice } from "../../interfaces/Notice.interface";
 import { fetchApiNodeNoticies } from "../../helpers/fetchData";
+import { useDispatch } from "react-redux";
+import { openSnackbar } from "../../redux/features/snackbarSlice";
+import { ImageComponent } from "./ImageComponent";
+import { assets, urlBase } from "../../assets";
 
 interface RegisterNoticeModalProps {
   open: boolean;
@@ -29,7 +33,10 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const dispatch = useDispatch();
   const [listCategories, setListCategories] = useState<ICategory[]>([]);
+  const [newFileImgCard, setNewFileImgCard] = useState<string | undefined>(undefined);
+  const [newFileImgBanner, setNewFileImgBanner] = useState<string | undefined>(undefined);
   const [newNotice, setNewNotice] = useState<INotice>({
     id_category: 0,
     id_notice: 0,
@@ -42,18 +49,35 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
   
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  useEffect(() => {
-    const handleCategories = async () => {
-      try {
-        const categories = await fetchApiNodeNoticies("GET", "get-categories");
-        setListCategories(categories || []);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
+  const handleCategories = async () => {
+    try {
+      const categories = await fetchApiNodeNoticies("GET", "get-categories");
+      if (categories.success) {
+        setListCategories(categories.data);
+      } else {
         setListCategories([]);
+        dispatch(openSnackbar({ message: categories.message, severity: 'error' }));
       }
-    };
-    handleCategories();
-  }, []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!open) {
+      setNewNotice({
+        id_category: 0,
+        id_notice: 0,
+        img_card: '',
+        img_banner: '',
+        title: '',
+        description: '',
+        state_notice: 1,
+      });
+      setErrors({});
+      handleCategories();
+    }
+  }, [open]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -106,6 +130,12 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
+      const fileURL = URL.createObjectURL(file);
+      if (imageType === "img_card") {
+        setNewFileImgCard(fileURL);
+      } else {
+        setNewFileImgBanner(fileURL);
+      }
       const extension = file.name.split(".").pop()?.toLowerCase();
       if (
         ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension || "")
@@ -115,7 +145,6 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
           [imageType]: file,
         }));
 
-        // Limpiar error cuando el usuario selecciona una imagen válida
         if (errors[imageType]) {
           setErrors({
             ...errors,
@@ -148,21 +177,18 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
   
       const response = await fetchApiNodeNoticies("POST", "register-notice", formData);
       if (response.success) {
-        alert(response.message);
         onSuccess();
         onClose();
-      } else {
-        console.log(response.data);
-        alert(response.message);
+        dispatch(openSnackbar({ message: response.message, severity: 'success' }));
       }
     } catch (error) {
-      console.error("Error en el registro:", error);
+      dispatch(openSnackbar({ message: "Error al registrar la noticia.", severity: 'error' }));
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Registrar Nueva Noticia</DialogTitle>
+      <DialogTitle sx={{ fontWeight: "bold"}}>Registrar Nueva Noticia</DialogTitle>
       <DialogContent>
         <Box sx={{ width: 500 }}>
           <Grid container spacing={2}>
@@ -196,7 +222,19 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <label htmlFor="img_card_input">Imagen del Card</label>
+              <label htmlFor="img_card_input" className="fw-bold">Imagen del Card</label>
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignContent="center"
+                my={1}
+              >
+                <ImageComponent
+                  urlImage={newFileImgCard || assets.svg.emptySvg}
+                  typeImage="img-card"
+                  name={newNotice.img_card}
+                />
+              </Box>
               <input
                 id="img_card_input"
                 className="form-control"
@@ -209,7 +247,19 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
               )}
             </Grid>
             <Grid item xs={12}>
-              <label htmlFor="img_banner_input">Imagen del Banner</label>
+              <label htmlFor="img_banner_input" className="fw-bold">Imagen del Banner</label>
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignContent="center"
+                my={1}
+              >
+                <ImageComponent
+                  urlImage={newFileImgBanner || assets.svg.emptySvg}
+                  typeImage="img-banner"
+                  name={newNotice.img_banner!}
+                />
+              </Box>
               <input
                 id="img_banner_input"
                 className="form-control"

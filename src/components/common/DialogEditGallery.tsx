@@ -17,7 +17,9 @@ import {
 import { fetchApiNodeNoticies } from "../../helpers/fetchData";
 import { IGallery, INotice } from "../../interfaces/Notice.interface";
 import { ImageComponent } from "./ImageComponent";
-import { assets, urlBase } from "../../assets";
+import { urlBase } from "../../assets";
+import { useDispatch } from "react-redux";
+import { openSnackbar } from "../../redux/features/snackbarSlice";
 
 interface DialogEditGalleryProps {
   open: boolean;
@@ -32,18 +34,20 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
   onSuccess,
   gallery,
 }) => {
+  const dispatch = useDispatch();
   const [listNoticies, setListNoticies] = useState<INotice[]>([]);
   const [editGallery, setEditGallery] = useState<IGallery>({
     ...gallery,
-    id_notice: gallery.id_notice !== 0 ? gallery.id_notice : -1, // Usar -1 temporalmente si id_notice es 0
+    id_notice: gallery.id_notice !== 0 ? gallery.id_notice : -1,
   });
   const [error, setError] = useState<string | null>(null);
+  const [newFileImg, setNewFileImg] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const handleNoticies = async () => {
       try {
         const noticies = await fetchApiNodeNoticies("GET", "get-noticies");
-        setListNoticies(noticies || []);
+        setListNoticies(noticies.data);
       } catch (error) {
         console.error("Error fetching noticies:", error);
         setListNoticies([]);
@@ -75,6 +79,7 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
+      setNewFileImg(URL.createObjectURL(file));
       const extension = file.name.split(".").pop()?.toLowerCase();
       if (
         ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension || "")
@@ -83,7 +88,7 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
           ...prevGallery,
           [imageType]: file,
         }));
-        setError(null); // Limpiar error si se selecciona una imagen válida
+        setError(null); 
       } else {
         setError("Formato de imagen no soportado.");
       }
@@ -101,6 +106,7 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
   };
 
   const handleSubmit = async () => {
+    // console.log("Datos editados: ", editGallery);
     const errorMessage = validateForm();
     if (errorMessage) {
       setError(errorMessage);
@@ -112,17 +118,15 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
       formData.append("id_gallery", editGallery.id_gallery.toString());
       formData.append("id_notice", editGallery.id_notice!.toString());
       formData.append("name_image", editGallery.name_image);
-
-      const response = await fetchApiNodeNoticies("POST", "update-gallery", formData);
-      if (response.error) {
-        setError(response.error);
-      } else {
+      const params = { name_img: editGallery.name_image }
+      const response = await fetchApiNodeNoticies("POST", "update-gallery", params);
+      if (response.success) {
         onSuccess();
         onClose();
+        dispatch(openSnackbar({ message: response.message, severity: 'success' }));
       }
     } catch (error) {
-      setError("Hubo un error al actualizar la galería.");
-      console.error("Error en la actualización:", error);
+      dispatch(openSnackbar({ message: "Error al actualizar la imagen en la galería.", severity: 'error' }));
     }
   };
 
@@ -143,7 +147,7 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
                 <Select
                   labelId="noticie-label"
                   id="noticie-select"
-                  value={editGallery.id_notice !== -1 ? editGallery.id_notice : ""}
+                  value={editGallery.id_notice || 0}
                   onChange={handleNoticieChange}
                   label="Noticia"
                 >
@@ -165,22 +169,18 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <label htmlFor="img_gallery_input">Cargar nueva imagen:</label>
               <Box display="flex" justifyContent="center" alignContent="center">
                 <ImageComponent
-                  urlImage={
-                    editGallery.name_image 
-                      ? `${urlBase}${editGallery.name_image}`
-                      : assets.svg.emptySvg
-                  }
+                  urlImage={newFileImg   || `${urlBase}${editGallery.name_image}`}
                   typeImage="img-gallery"
                   name={editGallery.name_image}
                 />
               </Box>
             </Grid>
             <Grid item xs={12}>
+              <label htmlFor="img_gallery_input" className="my-2 fw-bold">Cargar nueva imagen:</label>
               <input
-                id="img_card_input"
+                id="img_gallery_input"
                 className="form-control"
                 type="file"
                 accept="image/*"
