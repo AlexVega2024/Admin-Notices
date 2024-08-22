@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogActions,
@@ -25,7 +25,7 @@ interface DialogEditGalleryProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  gallery: IGallery; // Galería a editar
+  gallery: IGallery;
 }
 
 const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
@@ -42,6 +42,7 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
   });
   const [error, setError] = useState<string | null>(null);
   const [newFileImg, setNewFileImg] = useState<string | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const handleNoticies = async () => {
@@ -55,15 +56,6 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
     };
     handleNoticies();
   }, []);
-
-  useEffect(() => {
-    if (editGallery.id_notice === -1 && listNoticies.length > 0) {
-      setEditGallery({
-        ...editGallery,
-        id_notice: listNoticies[0].id_notice,
-      });
-    }
-  }, [listNoticies]);
 
   const handleNoticieChange = (event: SelectChangeEvent<number>) => {
     setEditGallery({
@@ -118,8 +110,7 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
       formData.append("id_gallery", editGallery.id_gallery.toString());
       formData.append("id_notice", editGallery.id_notice!.toString());
       formData.append("name_image", editGallery.name_image);
-      const params = { name_img: editGallery.name_image }
-      const response = await fetchApiNodeNoticies("POST", "update-gallery", params);
+      const response = await fetchApiNodeNoticies("POST", "update-gallery", formData);
       if (response.success) {
         onSuccess();
         onClose();
@@ -127,6 +118,13 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
       }
     } catch (error) {
       dispatch(openSnackbar({ message: "Error al actualizar la imagen en la galería.", severity: 'error' }));
+    }
+  };
+
+  // Manejar el clic en la imagen para abrir el selector de archivos
+  const handleImageClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -147,7 +145,7 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
                 <Select
                   labelId="noticie-label"
                   id="noticie-select"
-                  value={editGallery.id_notice || 0}
+                  value={editGallery.id_notice}
                   onChange={handleNoticieChange}
                   label="Noticia"
                 >
@@ -169,21 +167,29 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <Box display="flex" justifyContent="center" alignContent="center">
+              <label htmlFor="img_gallery_input" className="my-2 fw-bold">Cargar nueva imagen:</label>
+              <Box 
+                display="flex" 
+                justifyContent="center" 
+                alignContent="center" 
+                onClick={handleImageClick}
+                sx={{
+                  cursor: 'pointer'
+                }}>
                 <ImageComponent
                   urlImage={newFileImg   || `${urlBase}${editGallery.name_image}`}
                   typeImage="img-gallery"
-                  name={editGallery.name_image}
+                  name={editGallery.name_image.toString()}
                 />
               </Box>
             </Grid>
             <Grid item xs={12}>
-              <label htmlFor="img_gallery_input" className="my-2 fw-bold">Cargar nueva imagen:</label>
               <input
                 id="img_gallery_input"
                 className="form-control"
                 type="file"
                 accept="image/*"
+                style={{ display: 'none' }}
                 onChange={(e) => handleImageChange(e, "name_image")}
               />
             </Grid>

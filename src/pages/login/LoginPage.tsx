@@ -6,9 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "../../hooks/useForm";
 import { ImageComponent } from "../../components/common/ImageComponent";
 import { assets } from "../../assets";
+import SnackbarNotification from "../../components/common/SnackBarComponent";
+import { useDispatch } from "react-redux";
+import { openSnackbar } from "../../redux/features/snackbarSlice";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const initialForm = {
     user: "",
     password: "",
@@ -68,10 +72,9 @@ const LoginPage = () => {
         setDataUser(data.token);
         navigate("/");
       } else if (data.error) {
-        setErrors({
-          user: "Usuario y/o contraseña son incorrectos",
-          password: "",
-        });
+        dispatch(
+          openSnackbar({ message: "Usuario y/o contraseña son incorrectos.", severity: "error" })
+        );
       }
     } catch (error) {
       console.error("Error al loguearse:", error);
@@ -81,91 +84,96 @@ const LoginPage = () => {
   };
 
   return (
-    <Grid
-      container
-      justifyContent="center"
-      alignItems="center"
-      spacing={0}
-      sx={{ height: "100vh", padding: 2 }}
-    >
-      <Grid item xs={12} sm={8} md={6} lg={4}>
-        <Box
-          sx={{
-            width: "100%",
-            border: "1px solid black",
-            borderRadius: "5px",
-            backgroundColor: "#e4e9f7",
-            padding: 3,
-            boxShadow: 3,
-            textAlign: "center",
-          }}
-        >
-          <Box>
-            <ImageComponent
-              urlImage={assets.images.logoNegro}
-              widthImage={200}
-              typeImage="login"
-              name="logo"
-              objectFit="scale-down"
-            />
-          </Box>
-          <Typography variant="h4" color="black" gutterBottom>
-            Login
-          </Typography>
-          <TextField
-            required
-            name="user"
-            label="Usuario"
-            fullWidth
-            margin="normal"
-            variant="filled"
-            sx={{ backgroundColor: "white", borderRadius: 1 }}
-            value={user ?? ""}
-            onChange={onInputChange}
-            error={Boolean(errors.user)}
-            helperText={errors.user}
-          />
-          <TextField
-            required
-            name="password"
-            label="Contraseña"
-            fullWidth
-            margin="normal"
-            variant="filled"
-            sx={{ backgroundColor: "white", borderRadius: 1 }}
-            value={password ?? ""}
-            onChange={onInputChange}
-            error={Boolean(errors.password)}
-            helperText={errors.password}
-          />
+    <div>
+      <Grid
+        container
+        justifyContent="center"
+        alignItems="center"
+        spacing={0}
+        sx={{ height: "100vh", padding: 2 }}
+      >
+        <Grid item xs={12} sm={8} md={6} lg={4}>
           <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            sx={{ marginTop: 3 }}
+            sx={{
+              width: "100%",
+              border: "1px solid black",
+              borderRadius: "5px",
+              backgroundColor: "#e4e9f7",
+              padding: 3,
+              boxShadow: 3,
+              textAlign: "center",
+            }}
           >
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<Login />}
-              sx={{
-                bgcolor: "#203b79",
-                height: "50px",
-                "&:hover": {
-                  bgcolor: "#486ec7",
-                },
-                "&.Mui-focused": {
-                  bgcolor: "#486ec7",
-                },
-              }}
-              onClick={HandleSubmit}
+            <Box>
+              <ImageComponent
+                urlImage={assets.images.logoNegro}
+                widthImage={200}
+                typeImage="login"
+                name="logo"
+                objectFit="scale-down"
+              />
+            </Box>
+            <Typography variant="h4" color="black" gutterBottom>
+              Login
+            </Typography>
+            <TextField
+              required
+              name="user"
+              label="Usuario"
+              fullWidth
+              margin="normal"
+              variant="filled"
+              sx={{ backgroundColor: "white", borderRadius: 1 }}
+              value={user ?? ""}
+              onChange={onInputChange}
+              error={Boolean(errors.user)}
+              helperText={errors.user}
+            />
+            <TextField
+              required
+              name="password"
+              label="Contraseña"
+              fullWidth
+              margin="normal"
+              variant="filled"
+              sx={{ backgroundColor: "white", borderRadius: 1 }}
+              value={password ?? ""}
+              onChange={onInputChange}
+              error={Boolean(errors.password)}
+              helperText={errors.password}
+            />
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              sx={{ marginTop: 3 }}
             >
-              Iniciar Sesión
-            </Button>
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<Login />}
+                sx={{
+                  bgcolor: "#203b79",
+                  height: "50px",
+                  "&:hover": {
+                    bgcolor: "#486ec7",
+                  },
+                  "&.Mui-focused": {
+                    bgcolor: "#486ec7",
+                  },
+                }}
+                onClick={HandleSubmit}
+              >
+                Iniciar Sesión
+              </Button>
+            </Box>
           </Box>
-        </Box>
+        </Grid>
       </Grid>
-    </Grid>
+
+      {/* Snackbar para mensajes */}
+      <SnackbarNotification />
+    </div>
   );
 };
 

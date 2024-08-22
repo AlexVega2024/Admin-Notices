@@ -101,7 +101,7 @@ export const GaleriaPage = () => {
         </Box>
       </div>
       <div className="table-responsive">
-        <table className="table table-striped">
+        <table className="table table-striped border border-dark">
           <thead className="text-center text-white" style={{ backgroundColor: "#203b79" }}>
             <tr>
               <th scope="col">N°</th>

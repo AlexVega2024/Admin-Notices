@@ -14,7 +14,7 @@ export interface INotice {
 export interface IGallery {
   id_notice: number;
   id_gallery: number;
-  name_image: string;
+  name_image: string | File;
   state_image: number;
 }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogActions,
@@ -20,7 +20,7 @@ import { fetchApiNodeNoticies } from "../../helpers/fetchData";
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "../../redux/features/snackbarSlice";
 import { ImageComponent } from "./ImageComponent";
-import { assets, urlBase } from "../../assets";
+import { assets } from "../../assets";
 
 interface RegisterNoticeModalProps {
   open: boolean;
@@ -37,6 +37,8 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
   const [listCategories, setListCategories] = useState<ICategory[]>([]);
   const [newFileImgCard, setNewFileImgCard] = useState<string | undefined>(undefined);
   const [newFileImgBanner, setNewFileImgBanner] = useState<string | undefined>(undefined);
+  const fileInputCardRef = useRef<HTMLInputElement | null>(null);
+  const fileInputBannerRef = useRef<HTMLInputElement | null>(null);
   const [newNotice, setNewNotice] = useState<INotice>({
     id_category: 0,
     id_notice: 0,
@@ -74,7 +76,8 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
         description: '',
         state_notice: 1,
       });
-      setErrors({});
+      setNewFileImgCard(undefined)
+      setNewFileImgBanner(undefined)
       handleCategories();
     }
   }, [open]);
@@ -123,6 +126,18 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
     }
   };
 
+  const handleClikImage = (imageType: string) => {
+    if (imageType === "card") {
+      if (fileInputCardRef.current) {
+        fileInputCardRef.current.click();
+      }
+    } else {
+      if (fileInputBannerRef.current) {
+        fileInputBannerRef.current.click();
+      }
+    }
+  }
+
   const handleImageSelect = (
     e: React.ChangeEvent<HTMLInputElement>,
     imageType: "img_card" | "img_banner" 
@@ -130,16 +145,16 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      const fileURL = URL.createObjectURL(file);
-      if (imageType === "img_card") {
-        setNewFileImgCard(fileURL);
-      } else {
-        setNewFileImgBanner(fileURL);
-      }
       const extension = file.name.split(".").pop()?.toLowerCase();
       if (
         ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension || "")
       ) {
+        const fileURL = URL.createObjectURL(file);
+        if (imageType === "img_card") {
+          setNewFileImgCard(fileURL);
+        } else {
+          setNewFileImgBanner(fileURL);
+        }
         setNewNotice((prevNotice) => ({
           ...prevNotice,
           [imageType]: file,
@@ -227,19 +242,24 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
                 display="flex"
                 justifyContent="center"
                 alignContent="center"
+                onClick={() => handleClikImage("card")}
                 my={1}
+                sx={{cursor: 'pointer'}}
               >
                 <ImageComponent
-                  urlImage={newFileImgCard || assets.svg.emptySvg}
+                  urlImage={newFileImgCard || assets.images.uploadImage}
                   typeImage="img-card"
                   name={newNotice.img_card}
+                  border
                 />
               </Box>
               <input
                 id="img_card_input"
+                ref={fileInputCardRef}
                 className="form-control"
                 type="file"
                 accept="image/*"
+                style={{ display: 'none' }}
                 onChange={(e) => handleImageSelect(e, "img_card")}
               />
               {errors.img_card && (
@@ -252,19 +272,24 @@ const DialogRegisterNoticies: React.FC<RegisterNoticeModalProps> = ({
                 display="flex"
                 justifyContent="center"
                 alignContent="center"
+                onClick={() => handleClikImage("banner")}
                 my={1}
+                sx={{cursor: 'pointer'}}
               >
                 <ImageComponent
-                  urlImage={newFileImgBanner || assets.svg.emptySvg}
+                  urlImage={newFileImgBanner || assets.images.uploadImage}
                   typeImage="img-banner"
                   name={newNotice.img_banner!}
+                  border
                 />
               </Box>
               <input
                 id="img_banner_input"
+                ref={fileInputBannerRef}
                 className="form-control"
                 type="file"
                 accept="image/*"
+                style={{ display: 'none' }}
                 onChange={(e) => handleImageSelect(e, "img_banner")}
               />
               {errors.img_banner && (
