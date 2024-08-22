@@ -186,6 +186,7 @@ const DialogEditGallery: React.FC<DialogEditGalleryProps> = ({
             <Grid item xs={12}>
               <input
                 id="img_gallery_input"
+                ref={fileInputRef}
                 className="form-control"
                 type="file"
                 accept="image/*"

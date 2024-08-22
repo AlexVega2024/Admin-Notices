@@ -131,7 +131,7 @@ export const NoticiasPage = () => {
       </div>
 
       <div className="table-responsive">
-        <table className="table table-striped table-bordered">
+        <table className="table table-striped border border-dark">
           <thead
             className="text-center text-white"
             style={{ backgroundColor: "#203b79" }}
